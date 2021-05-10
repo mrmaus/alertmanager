@@ -127,6 +127,28 @@ var (
 		Expire:   duration(1 * time.Hour),
 		HTML:     false,
 	}
+
+	DefaultAmqpConfig = AmqpConfig{
+		NotifierConfig: NotifierConfig{
+			VSendResolved: false,
+		},
+		Url:   "amqp://guest:guest@localhost:5672",
+		Split: false,
+		Queue: QueueConfig{
+			Durable:    false,
+			AutoDelete: false,
+			Exclusive:  false,
+			NoWait:     false,
+		},
+		Exchange: ExchangeConfig{
+			Name:       "",
+			Kind:       "direct",
+			Durable:    true,
+			AutoDelete: false,
+			Internal:   false,
+			NoWait:     false,
+		},
+	}
 )
 
 // NotifierConfig contains base options common across all notifier configurations.
@@ -179,6 +201,41 @@ func (c *EmailConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	}
 	c.Headers = normalizedHeaders
 
+	return nil
+}
+
+type AmqpConfig struct {
+	NotifierConfig `yaml:",inline" json:",inline"`
+
+	Url      string         `yaml:"url,omitempty" json:"to,omitempty"`
+	Split    bool           `yaml:"split,omitempty" json:"split,omitempty"`
+	Queue    QueueConfig    `yaml:"queue,omitempty" json:"queue,omitempty"`
+	Exchange ExchangeConfig `yaml:"exchange,omitempty" json:"exchange,omitempty"`
+}
+
+type QueueConfig struct {
+	Name       string `yaml:"name,omitempty" json:"src,omitempty"`
+	Durable    bool   `yaml:"durable,omitempty" json:"durable,omitempty"`
+	AutoDelete bool   `yaml:"auto_delete,omitempty" json:"auto_delete,omitempty"`
+	Exclusive  bool   `yaml:"exclusive,omitempty" json:"exclusive,omitempty"`
+	NoWait     bool   `yaml:"no_wait,omitempty" json:"no_wait,omitempty"`
+}
+
+type ExchangeConfig struct {
+	Name       string `yaml:"name,omitempty" json:"src,omitempty"`
+	Kind       string `yaml:"kind,omitempty" json:"kind,omitempty"`
+	Durable    bool   `yaml:"durable,omitempty" json:"durable,omitempty"`
+	AutoDelete bool   `yaml:"auto_delete,omitempty" json:"auto_delete,omitempty"`
+	Internal   bool   `yaml:"internal,omitempty" json:"internal,omitempty"`
+	NoWait     bool   `yaml:"no_wait,omitempty" json:"no_wait,omitempty"`
+}
+
+func (c *AmqpConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	*c = DefaultAmqpConfig
+	type plain AmqpConfig
+	if err := unmarshal((*plain)(c)); err != nil {
+		return err
+	}
 	return nil
 }
 
